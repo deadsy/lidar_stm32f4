@@ -7,7 +7,15 @@
 //-----------------------------------------------------------------------------
 
 #include "stm32f4xx_hal.h"
+#include "usbd_desc.h"
+#include "usbd_cdc.h"
+#include "usbd_cdc_interface.h"
 #include "gpio.h"
+#include "debounce.h"
+#include "timers.h"
+#include "stm32f4_regs.h"
+
+USBD_HandleTypeDef hUSBDDevice;
 
 //-----------------------------------------------------------------------------
 
@@ -66,13 +74,38 @@ static void SystemClock_Config(void)
 
 //-----------------------------------------------------------------------------
 
+void debounce_on_handler(uint32_t bits)
+{
+    if (bits & (1 << PUSH_BUTTON_BIT)) {
+        gpio_set(LED_RED);
+    }
+}
+
+void debounce_off_handler(uint32_t bits)
+{
+    if (bits & (1 << PUSH_BUTTON_BIT)) {
+        gpio_clr(LED_RED);
+    }
+}
+
+//-----------------------------------------------------------------------------
+
 int main(void)
 {
     HAL_Init();
     SystemClock_Config();
     gpio_init();
+    timers_init();
+    debounce_init();
 
-    while (1);
+    USBD_Init(&hUSBDDevice, &VCP_Desc, 0);
+    USBD_RegisterClass(&hUSBDDevice, &USBD_CDC);
+    USBD_CDC_RegisterInterface(&hUSBDDevice, &USBD_CDC_fops);
+    USBD_Start(&hUSBDDevice);
+
+    while (1) {
+        printf("Hello LIDAR\r\n");
+    }
 
     return 0;
 }

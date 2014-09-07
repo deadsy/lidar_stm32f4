@@ -9,6 +9,7 @@ Interrupt Handlers
 #include "stm32f4xx_it.h"
 #include "stm32f4xx_hal.h"
 #include "gpio.h"
+#include "debounce.h"
 
 //-----------------------------------------------------------------------------
 
@@ -57,7 +58,22 @@ void SysTick_Handler(void)
         gpio_toggle(LED_GREEN);
     }
 
+    // sample debounced inputs every 16 ms
+    if ((ticks & 15) == 0) {
+        debounce_isr();
+    }
+
     HAL_IncTick();
 }
 
 //-----------------------------------------------------------------------------
+// STM32F4xx Peripherals Interrupt Handlers
+
+extern PCD_HandleTypeDef hpcd;
+void OTG_FS_IRQHandler(void)
+{
+    HAL_PCD_IRQHandler(&hpcd);
+}
+
+//-----------------------------------------------------------------------------
+

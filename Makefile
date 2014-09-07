@@ -16,6 +16,7 @@ HAL_DIR = ./hal/src
 SRC += $(HAL_DIR)/stm32f4xx_hal.c \
        $(HAL_DIR)/stm32f4xx_hal_rcc.c \
        $(HAL_DIR)/stm32f4xx_hal_rcc_ex.c \
+       $(HAL_DIR)/stm32f4xx_hal_pcd.c \
        $(HAL_DIR)/stm32f4xx_hal_pwr_ex.c \
        $(HAL_DIR)/stm32f4xx_hal_cortex.c \
        $(HAL_DIR)/stm32f4xx_hal_gpio.c \
@@ -25,6 +26,7 @@ SRC += $(HAL_DIR)/stm32f4xx_hal.c \
        $(HAL_DIR)/stm32f4xx_hal_sdram.c \
        $(HAL_DIR)/stm32f4xx_hal_i2c.c \
        $(HAL_DIR)/stm32f4xx_ll_fmc.c \
+       $(HAL_DIR)/stm32f4xx_ll_usb.c \
 
        #$(HAL_DIR)/stm32f4xx_hal_spi.c \
 
@@ -35,12 +37,26 @@ BSP_DIR = ./bsp/STM32F429I-Discovery
 #       $(BSP_DIR)/stm32f429i_discovery_sdram.c \
 #       $(BSP_DIR)/../Components/ili9341/ili9341.c \
 
+# usb sources
+USB_DIR = ./usb
+SRC += $(USB_DIR)/core/usbd_core.c \
+       $(USB_DIR)/core/usbd_ctlreq.c \
+       $(USB_DIR)/core/usbd_ioreq.c \
+       $(USB_DIR)/cdc/usbd_cdc.c \
+
 # application sources
 SRC_DIR = ./src
 SRC += $(SRC_DIR)/main.c \
        $(SRC_DIR)/system_stm32f4xx.c \
        $(SRC_DIR)/stm32f4xx_it.c \
+       $(SRC_DIR)/debounce.c \
        $(SRC_DIR)/gpio.c \
+       $(SRC_DIR)/usbd_cdc_interface.c \
+       $(SRC_DIR)/usbd_conf.c \
+       $(SRC_DIR)/usbd_desc.c \
+       $(SRC_DIR)/timers.c \
+       $(SRC_DIR)/syscalls.c \
+       $(SRC_DIR)/stm32f4_regs.c \
 
 OBJ = $(patsubst %.c, %.o, $(SRC))
 OBJ += $(SRC_DIR)/start.o
@@ -49,6 +65,8 @@ OBJ += $(SRC_DIR)/start.o
 INC = .
 INC += ./cmsis
 INC += ./hal/inc
+INC += $(USB_DIR)/core
+INC += $(USB_DIR)/cdc
 INC += $(BSP_DIR)
 INC += $(SRC_DIR)
 
