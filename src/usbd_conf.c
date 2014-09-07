@@ -41,44 +41,36 @@ PCD_HandleTypeDef hpcd;
   */
 void HAL_PCD_MspInit(PCD_HandleTypeDef *hpcd)
 {
-  /* Note: On STM32F4-Discovery board only USB OTG FS core is supported. */
+  /* On STM32F429I-DISCO, USB OTG HS Core will operate in Full speed mode */
   GPIO_InitTypeDef  GPIO_InitStruct;
 
-  if(hpcd->Instance == USB_OTG_FS)
-  {
+  if(hpcd->Instance == USB_OTG_HS) {
     /* Configure USB FS GPIOs */
-    __GPIOA_CLK_ENABLE();
+    __GPIOB_CLK_ENABLE();
 
-    /* Configure DM DP Pins */
-    GPIO_InitStruct.Pin = GPIO_PIN_11 | GPIO_PIN_12;
-    GPIO_InitStruct.Speed = GPIO_SPEED_HIGH;
+    /*Configure GPIO for HS on FS mode*/
+    GPIO_InitStruct.Pin = GPIO_PIN_12 | GPIO_PIN_14 |GPIO_PIN_15;
     GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
     GPIO_InitStruct.Pull = GPIO_NOPULL;
-    GPIO_InitStruct.Alternate = GPIO_AF10_OTG_FS;
-    HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+    GPIO_InitStruct.Speed = GPIO_SPEED_HIGH;
+    GPIO_InitStruct.Alternate = GPIO_AF12_OTG_HS_FS;
+    HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
-	/* Configure VBUS Pin */
-    GPIO_InitStruct.Pin = GPIO_PIN_9;
+    /* Configure VBUS Pin */
+    GPIO_InitStruct.Pin = GPIO_PIN_13 ;
     GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
     GPIO_InitStruct.Pull = GPIO_NOPULL;
-    HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+    HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
+    GPIO_InitStruct.Pull = GPIO_NOPULL;
 
-    /* This for ID line debug */
-    GPIO_InitStruct.Pin = GPIO_PIN_10;
-    GPIO_InitStruct.Mode = GPIO_MODE_AF_OD;
-    GPIO_InitStruct.Pull = GPIO_PULLUP;
-    GPIO_InitStruct.Speed = GPIO_SPEED_HIGH;
-    GPIO_InitStruct.Alternate = GPIO_AF10_OTG_FS;
-    HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+    /* Enable USB HS Clocks */
+    __USB_OTG_HS_CLK_ENABLE();
 
-    /* Enable USB FS Clocks */
-    __USB_OTG_FS_CLK_ENABLE();
+    /* Set USBHS Interrupt priority to 6 */
+    HAL_NVIC_SetPriority(OTG_HS_IRQn, 6, 0);
 
-    /* Set USBFS Interrupt priority */
-    HAL_NVIC_SetPriority(OTG_FS_IRQn, 7, 0);
-
-    /* Enable USBFS Interrupt */
-    HAL_NVIC_EnableIRQ(OTG_FS_IRQn);
+    /* Enable USBHS Interrupt */
+    HAL_NVIC_EnableIRQ(OTG_HS_IRQn);
   }
 }
 
@@ -89,11 +81,11 @@ void HAL_PCD_MspInit(PCD_HandleTypeDef *hpcd)
   */
 void HAL_PCD_MspDeInit(PCD_HandleTypeDef *hpcd)
 {
-  if(hpcd->Instance == USB_OTG_FS)
-  {
-    /* Disable USB FS Clocks */
-    __USB_OTG_FS_CLK_DISABLE();
-  }
+    if(hpcd->Instance == USB_OTG_HS) {
+        /* Disable USB FS Clocks */
+        __USB_OTG_HS_CLK_DISABLE();
+        __SYSCFG_CLK_DISABLE();
+    }
 }
 
 /*******************************************************************************
@@ -246,7 +238,7 @@ USBD_StatusTypeDef  USBD_LL_Init (USBD_HandleTypeDef *pdev)
    HAL_NVIC_SetPriority(SysTick_IRQn, 3, 0);
 
   /*Set LL Driver parameters */
-  hpcd.Instance = USB_OTG_FS;
+  hpcd.Instance = USB_OTG_HS;
   hpcd.Init.dev_endpoints = 4;
   hpcd.Init.use_dedicated_ep1 = 0;
   hpcd.Init.ep0_mps = 0x40;
@@ -254,7 +246,7 @@ USBD_StatusTypeDef  USBD_LL_Init (USBD_HandleTypeDef *pdev)
   hpcd.Init.low_power_enable = 0;
   hpcd.Init.phy_itface = PCD_PHY_EMBEDDED;
   hpcd.Init.Sof_enable = 0;
-  hpcd.Init.speed = PCD_SPEED_FULL;
+  hpcd.Init.speed = PCD_SPEED_HIGH_IN_FULL;
   hpcd.Init.vbus_sensing_enable = 1;
   /* Link The driver to the stack */
    hpcd.pData = pdev;

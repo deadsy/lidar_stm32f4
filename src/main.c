@@ -92,6 +92,8 @@ void debounce_off_handler(uint32_t bits)
 
 int main(void)
 {
+    int i = 0;
+
     HAL_Init();
     SystemClock_Config();
     gpio_init();
@@ -103,8 +105,16 @@ int main(void)
     USBD_CDC_RegisterInterface(&hUSBDDevice, &USBD_CDC_fops);
     USBD_Start(&hUSBDDevice);
 
+    // Delay any output to serial until the USB CDC port is working.
+    HAL_Delay(1500);
+
+    printf("\r\n");
+    display_exceptions();
+
     while (1) {
-        printf("Hello LIDAR\r\n");
+        printf("Hello LIDAR %d\r\n", i);
+        i += 1;
+        HAL_Delay(100);
     }
 
     return 0;
