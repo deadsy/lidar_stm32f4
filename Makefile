@@ -56,6 +56,7 @@ SRC += $(SRC_DIR)/main.c \
        $(SRC_DIR)/usbd_desc.c \
        $(SRC_DIR)/timers.c \
        $(SRC_DIR)/syscalls.c \
+       $(SRC_DIR)/usart.c \
        $(SRC_DIR)/stm32f4_regs.c \
 
 OBJ = $(patsubst %.c, %.o, $(SRC))

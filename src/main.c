@@ -13,6 +13,7 @@
 #include "gpio.h"
 #include "debounce.h"
 #include "timers.h"
+#include "usart.h"
 #include "stm32f4_regs.h"
 
 USBD_HandleTypeDef hUSBDDevice;
@@ -99,6 +100,7 @@ int main(void)
     gpio_init();
     timers_init();
     debounce_init();
+    usart_init();
 
     USBD_Init(&hUSBDDevice, &VCP_Desc, 0);
     USBD_RegisterClass(&hUSBDDevice, &USBD_CDC);

@@ -8,121 +8,121 @@ Pin Assignments for STM32F429I Discovery Board
 PA0 = push button
 PA1 = mems_int1
 PA2 = mems_int2
-PA3 =
+PA3 = lcd b5
 PA4 = video
 PA5 =
-PA6 =
-PA7 = acp
-PA8 = acp i2c
+PA6 = lcd g2
+PA7 = acp_rst
+PA8 = i2c3_scl
 PA9 =
 PA10 =
-PA11 =
-PA12 =
+PA11 = lcd r4
+PA12 = lcd r5
 PA13 =
 PA14 =
-PA15 = acp
+PA15 = tp_int1
 
-PB0
-PB1
-PB2
+PB0 = lcd r3
+PB1 = lcd r6
+PB2 =
 PB3 =
-PB4
-PB5
-PB6 =
+PB4 =
+PB5 = sdcke1
+PB6 = sdne1
 PB7 =
-PB8
-PB9 =
-PB10 =
-PB11
-PB12 = usb
-PB13 = usb
-PB14 = usb
-PB15 = usb
+PB8 = lcd b6
+PB9 = lcd b7
+PB10 = lcd g4
+PB11 = lcd g5
+PB12 = usb otg_fs_id
+PB13 = usb vbus_fs
+PB14 = usb otg_fs_dm
+PB15 = usb otg_fs_dp
 
-PC0 =
+PC0 = sdnwe
 PC1 = ncs_mems_spi
 PC2 = video
 PC3 =
-PC4 = usb
-PC5 = usb
+PC4 = usb otg_fs_pso
+PC5 = usb otg_fs_oc
 PC6 = video
-PC7 =
-PC8
-PC9 = acp i2c
-PC10 =
-PC11
+PC7 = lcd g6
+PC8 =
+PC9 = i2c3_sda
+PC10 = lcd r2
+PC11 =
 PC12 =
-PC13
+PC13 =
 PC14 = pc14_osc32_in
 PC15 = pc14_osc32_out
 
-PD0 =
-PD1 =
-PD2 =
-PD3 =
-PD4 =
-PD5 =
-PD6 =
-PD7 =
-PD8 =
-PD9 =
-PD10 =
+PD0 = sdram d2
+PD1 = sdram d3
+PD2 = im0
+PD3 = lcd g7
+PD4 = im1
+PD5 = im2
+PD6 = lcd b2
+PD7 = im3
+PD8 = sdram d13
+PD9 = sdram d14
+PD10 = sdram d15
 PD11 = video
 PD12 = video
 PD13 = video
-PD14 =
-PD15 =
+PD14 = sdram d0
+PD15 = sdram d1
 
-PE0 =
-PE1 =
+PE0 = nbl0
+PE1 = nbl1
 PE2 =
 PE3 =
 PE4 =
 PE5 =
 PE6 =
-PE7 =
-PE8 =
-PE9 =
-PE10 =
-PE11 =
-PE12 =
-PE13 =
-PE14 =
-PE15 =
+PE7 = sdram d4
+PE8 = sdram d5
+PE9 = sdram d6
+PE10 = sdram d7
+PE11 = sdram d8
+PE12 = sdram d9
+PE13 = sdram d10
+PE14 = sdram d11
+PE15 = sdram d12
 
-PF0 =
-PF1 =
-PF2 =
-PF3 =
-PF4 =
-PF5 =
+PF0 = sdram a0
+PF1 = sdram a1
+PF2 = sdram a2
+PF3 = sdram a3
+PF4 = sdram a4
+PF5 = sdram a5
 PF6 =
 PF7 = spi5_sck, video
 PF8 = spi5_miso
 PF9 = spi5_mosi, video
 PF10 = video
-PF11 =
-PF12 =
-PF13 =
-PF14 =
-PF15 =
+PF11 = sdnras
+PF12 = sdram a6
+PF13 = sdram a7
+PF14 = sdram a8
+PF15 = sdram a9
 
-PG0 =
-PG1 =
+PG0 = sdram a10
+PG1 = sdram a11
 PG2 =
 PG3 =
-PG4 =
-PG5 =
-PG6 =
+PG4 = ba0
+PG5 = ba1
+PG6 = lcd r7
 PG7 = video
-PG8 =
+PG8 = sdclk
 PG9 =
-PG10 =
-PG11 =
-PG12 =
-PG13 = led
-PG14 = led
-PG15 =
+PG10 = lcd g3
+PG11 = lcd b3
+PG12 = lcd b4
+PG13 = green led
+PG14 = red led
+PG15 = sdncas
 
 PH0 = ph0_osc_in
 PH1 = ph1_osc_out
@@ -166,6 +166,10 @@ PH1 = ph1_osc_out
 #define LED_GREEN       GPIO_NUM(PORTG, 13)
 #define LED_RED         GPIO_NUM(PORTG, 14)
 #define PUSH_BUTTON     GPIO_NUM(PORTA, 0) // 0 = open, 1 = pressed
+
+// serial port
+#define UART_TX         GPIO_NUM(PORTA, 9)
+#define UART_RX         GPIO_NUM(PORTA, 10)
 
 //-----------------------------------------------------------------------------
 // generic api functions
