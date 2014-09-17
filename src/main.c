@@ -7,6 +7,7 @@
 //-----------------------------------------------------------------------------
 
 #include "stm32f4xx_hal.h"
+#include "stm32f429i_discovery_lcd.h"
 #include "usbd_desc.h"
 #include "usbd_cdc.h"
 #include "usbd_cdc_interface.h"
@@ -91,16 +92,44 @@ void debounce_off_handler(uint32_t bits)
 
 //-----------------------------------------------------------------------------
 
+static void lcd_init(void)
+{
+    BSP_LCD_Init();
+
+    BSP_LCD_LayerDefaultInit(0, (uint32_t)LCD_FRAME_BUFFER);
+    BSP_LCD_SelectLayer(0);
+    BSP_LCD_Clear(LCD_COLOR_RED);
+    BSP_LCD_SetBackColor(LCD_COLOR_RED);
+    BSP_LCD_SetTextColor(LCD_COLOR_WHITE);
+
+//     BSP_LCD_LayerDefaultInit(1, (uint32_t)LCD_FRAME_BUFFER + 76800);
+//     BSP_LCD_SelectLayer(1);
+//     BSP_LCD_Clear(LCD_COLOR_RED);
+//     BSP_LCD_SetBackColor(LCD_COLOR_RED);
+//     BSP_LCD_SetTextColor(LCD_COLOR_WHITE);
+
+    BSP_LCD_SetLayerVisible(0, ENABLE);
+//     BSP_LCD_SetLayerVisible(1, ENABLE);
+
+    BSP_LCD_DisplayOn();
+}
+
+//-----------------------------------------------------------------------------
+
 int main(void)
 {
     int i = 0;
 
     HAL_Init();
     SystemClock_Config();
+
+    lcd_init();
     gpio_init();
     timers_init();
     debounce_init();
     usart_init();
+
+    BSP_LCD_DisplayStringAtLine(0, (uint8_t *)"Hello LIDAR");
 
     USBD_Init(&hUSBDDevice, &VCP_Desc, 0);
     USBD_RegisterClass(&hUSBDDevice, &USBD_CDC);

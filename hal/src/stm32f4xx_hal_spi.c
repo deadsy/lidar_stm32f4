@@ -79,6 +79,8 @@
 /* Includes ------------------------------------------------------------------*/
 #include "stm32f4xx_hal.h"
 
+#define UNUSED __attribute__((unused))
+
 /** @addtogroup STM32F4xx_HAL_Driver
   * @{
   */
@@ -462,7 +464,7 @@ HAL_StatusTypeDef HAL_SPI_Transmit(SPI_HandleTypeDef *hspi, uint8_t *pData, uint
   */
 HAL_StatusTypeDef HAL_SPI_Receive(SPI_HandleTypeDef *hspi, uint8_t *pData, uint16_t Size, uint32_t Timeout)
 {
-  __IO uint16_t tmpreg;
+  __IO uint16_t tmpreg UNUSED;
   uint32_t tmp = 0;
 
   if(hspi->State == HAL_SPI_STATE_READY)
@@ -636,7 +638,7 @@ HAL_StatusTypeDef HAL_SPI_Receive(SPI_HandleTypeDef *hspi, uint8_t *pData, uint1
   */
 HAL_StatusTypeDef HAL_SPI_TransmitReceive(SPI_HandleTypeDef *hspi, uint8_t *pTxData, uint8_t *pRxData, uint16_t Size, uint32_t Timeout)
 {
-  __IO uint16_t tmpreg;
+  __IO uint16_t tmpreg UNUSED;
   uint32_t tmp = 0;
   
   tmp = hspi->State; 
@@ -1618,7 +1620,7 @@ static void SPI_TxISR(SPI_HandleTypeDef *hspi)
   */
 static void SPI_RxCloseIRQHandler(SPI_HandleTypeDef *hspi)
 {
-  __IO uint16_t tmpreg;
+  __IO uint16_t tmpreg UNUSED;
 
   if(hspi->Init.CRCCalculation == SPI_CRCCALCULATION_ENABLED)
   {
@@ -1799,7 +1801,7 @@ static void SPI_DMATransmitCplt(DMA_HandleTypeDef *hdma)
   */
 static void SPI_DMAReceiveCplt(DMA_HandleTypeDef *hdma)
 {
-  __IO uint16_t tmpreg;
+  __IO uint16_t tmpreg UNUSED;
 
   SPI_HandleTypeDef* hspi = ( SPI_HandleTypeDef* )((DMA_HandleTypeDef* )hdma)->Parent;
 
@@ -1859,7 +1861,7 @@ static void SPI_DMAReceiveCplt(DMA_HandleTypeDef *hdma)
   */
 static void SPI_DMATransmitReceiveCplt(DMA_HandleTypeDef *hdma)   
 {
-  __IO uint16_t tmpreg;
+  __IO uint16_t tmpreg UNUSED;
 
   SPI_HandleTypeDef* hspi = ( SPI_HandleTypeDef* )((DMA_HandleTypeDef* )hdma)->Parent;
 

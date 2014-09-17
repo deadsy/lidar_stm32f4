@@ -27,15 +27,14 @@ SRC += $(HAL_DIR)/stm32f4xx_hal.c \
        $(HAL_DIR)/stm32f4xx_hal_i2c.c \
        $(HAL_DIR)/stm32f4xx_ll_fmc.c \
        $(HAL_DIR)/stm32f4xx_ll_usb.c \
-
-       #$(HAL_DIR)/stm32f4xx_hal_spi.c \
+       $(HAL_DIR)/stm32f4xx_hal_spi.c \
 
 # bsp sources
 BSP_DIR = ./bsp/STM32F429I-Discovery
-#SRC += $(BSP_DIR)/stm32f429i_discovery.c \
-#       $(BSP_DIR)/stm32f429i_discovery_lcd.c \
-#       $(BSP_DIR)/stm32f429i_discovery_sdram.c \
-#       $(BSP_DIR)/../Components/ili9341/ili9341.c \
+SRC += $(BSP_DIR)/stm32f429i_discovery.c \
+       $(BSP_DIR)/stm32f429i_discovery_lcd.c \
+       $(BSP_DIR)/stm32f429i_discovery_sdram.c \
+       $(BSP_DIR)/../Components/ili9341/ili9341.c \
 
 # usb sources
 USB_DIR = ./usb
@@ -65,6 +64,7 @@ OBJ += $(SRC_DIR)/start.o
 # include files
 INC = .
 INC += ./cmsis
+INC += ./fonts
 INC += ./hal/inc
 INC += $(USB_DIR)/core
 INC += $(USB_DIR)/cdc
