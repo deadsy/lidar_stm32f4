@@ -1,6 +1,6 @@
 
 # cross compilation tools
-XTOOLS_DIR = /opt/gcc-arm-none-eabi-4_8-2014q1
+XTOOLS_DIR = /opt/gcc-arm-none-eabi-4_8-2014q2
 X_LIBC_DIR = $(XTOOLS_DIR)/arm-none-eabi/lib/armv7e-m/fpu
 X_LIBGCC_DIR = $(XTOOLS_DIR)/lib/gcc/arm-none-eabi/4.8.3/armv7e-m/fpu
 X_CC = $(XTOOLS_DIR)/bin/arm-none-eabi-gcc
@@ -57,6 +57,8 @@ SRC += $(SRC_DIR)/main.c \
        $(SRC_DIR)/syscalls.c \
        $(SRC_DIR)/usart.c \
        $(SRC_DIR)/stm32f4_regs.c \
+       $(SRC_DIR)/lidar.c \
+       $(SRC_DIR)/pid.c \
 
 OBJ = $(patsubst %.c, %.o, $(SRC))
 OBJ += $(SRC_DIR)/start.o
