@@ -116,10 +116,11 @@ static void lcd_init(void)
 
 //-----------------------------------------------------------------------------
 
+void serial_write(uint8_t data);
+uint8_t serial_read(void);
+
 int main(void)
 {
-    int i = 0;
-
     HAL_Init();
     SystemClock_Config();
 
@@ -127,7 +128,8 @@ int main(void)
     gpio_init();
     timers_init();
     debounce_init();
-    usart_init();
+
+    USART_t *sio = usart_init(0);
 
     BSP_LCD_DisplayStringAtLine(0, (uint8_t *)"Hello LIDAR");
 
@@ -143,9 +145,12 @@ int main(void)
     display_exceptions();
 
     while (1) {
-        printf("Hello LIDAR %d\r\n", i);
-        i += 1;
-        HAL_Delay(100);
+        uint8_t x = serial_read();
+        if (x != 0xff) {
+             sio->tx(x);
+             while(sio->test_rx() == 0);
+             serial_write(sio->rx());
+        }
     }
 
     return 0;

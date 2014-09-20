@@ -6,8 +6,20 @@ USART Driver
 */
 //-----------------------------------------------------------------------------
 
+#include <string.h>
+
 #include "stm32f4xx_hal.h"
 #include "usart.h"
+
+//-----------------------------------------------------------------------------
+
+#define NUM_USARTS 1
+static USART_t usarts[NUM_USARTS];
+
+// map an index number to the uart/usart hardware
+static USART_TypeDef *idx2usart[NUM_USARTS] = {
+    USART1,
+};
 
 //-----------------------------------------------------------------------------
 
@@ -49,36 +61,9 @@ static void set_baud_rate(USART_TypeDef *usart, int baud)
 }
 
 //-----------------------------------------------------------------------------
-// setup a serial port
-// Using USART1/AF7 mapped to PA9(tx) PA10(rx).
 
-void usart_putc(char c)
+static void usart_hw_init(USART_TypeDef* const usart)
 {
-    USART_TypeDef* const usart = USART1;
-    while ((usart->SR & USART_SR_TXE) == 0);
-    usart->DR = c;
-}
-
-void usart_flush(void)
-{
-}
-
-// return non-zero if we have rx data
-int usart_tstc(void)
-{
-    USART_TypeDef* const usart = USART1;
-    return (usart->SR & USART_SR_RXNE) != 0;
-}
-
-char usart_getc(void)
-{
-    USART_TypeDef* const usart = USART1;
-    return usart->DR & 255;
-}
-
-void usart_init(void)
-{
-    USART_TypeDef* const usart = USART1;
     uint32_t val;
 
     // enable peripheral clock
@@ -123,6 +108,61 @@ void usart_init(void)
 
     // enable the uart
     usart->CR1 |= USART_CR1_UE;
+}
+
+//-----------------------------------------------------------------------------
+
+static int usart_test_rx(USART_t *ptr) {
+    return (ptr->usart->SR & USART_SR_RXNE) != 0;
+}
+
+static uint8_t usart_rx(USART_t *ptr) {
+    return ptr->usart->DR & 0xff;
+}
+
+//-----------------------------------------------------------------------------
+
+static void usart_tx(USART_t *ptr, uint8_t c) {
+    USART_TypeDef* const usart = ptr->usart;
+    while ((usart->SR & USART_SR_TXE) == 0);
+    usart->DR = c;
+}
+
+//-----------------------------------------------------------------------------
+// pseudo lambdas
+
+static uint8_t rx_0(void) {
+    return usart_rx(&usarts[0]);
+}
+
+static int test_rx_0(void) {
+    return usart_test_rx(&usarts[0]);
+}
+
+static void tx_0(uint8_t c) {
+    return usart_tx(&usarts[0], c);
+}
+
+//-----------------------------------------------------------------------------
+
+USART_t *usart_init(unsigned int idx) {
+
+    if (idx >= NUM_USARTS) {
+        return 0;
+    }
+
+    USART_t *ptr = &usarts[idx];
+    memset(ptr, 0, sizeof(USART_t));
+    ptr->usart = idx2usart[idx];
+    usart_hw_init(ptr->usart);
+
+    if (idx == 0) {
+        ptr->rx = rx_0;
+        ptr->test_rx = test_rx_0;
+        ptr->tx = tx_0;
+    } // else ..
+
+    return ptr;
 }
 
 //-----------------------------------------------------------------------------
