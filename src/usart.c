@@ -16,11 +16,6 @@ USART Driver
 #define NUM_USARTS 1
 static USART_t usarts[NUM_USARTS];
 
-// map an index number to the uart/usart hardware
-static USART_TypeDef *idx2usart[NUM_USARTS] = {
-    USART1,
-};
-
 //-----------------------------------------------------------------------------
 
 // enable the peripheral clock for the usart
@@ -62,8 +57,9 @@ static void set_baud_rate(USART_TypeDef *usart, int baud)
 
 //-----------------------------------------------------------------------------
 
-static void usart_hw_init(USART_TypeDef* const usart)
+static void usart_hw_init(USART_t *ptr)
 {
+    USART_TypeDef* usart = ptr->usart;
     uint32_t val;
 
     // enable peripheral clock
@@ -112,6 +108,10 @@ static void usart_hw_init(USART_TypeDef* const usart)
 
 //-----------------------------------------------------------------------------
 
+#ifdef USART_POLLED
+
+// Polled driver
+
 static int usart_test_rx(USART_t *ptr) {
     return (ptr->usart->SR & USART_SR_RXNE) != 0;
 }
@@ -120,16 +120,49 @@ static uint8_t usart_rx(USART_t *ptr) {
     return ptr->usart->DR & 0xff;
 }
 
-//-----------------------------------------------------------------------------
-
 static void usart_tx(USART_t *ptr, uint8_t c) {
     USART_TypeDef* const usart = ptr->usart;
     while ((usart->SR & USART_SR_TXE) == 0);
     usart->DR = c;
 }
 
+#else
+
+// ISR based driver with circular tx/rx FIFOs
+
+static int usart_test_rx(USART_t *ptr) {
+    return ptr->rx_n != 0;
+}
+
+static uint8_t usart_rx(USART_t *ptr) {
+    NVIC_DisableIRQ(ptr->irq);
+    uint8_t c = ptr->rxbuf[ptr->rx_rd];
+    ptr->rx_rd = (ptr->rx_rd + 1) & (USART_RX_BUFFER_SIZE - 1);
+    ptr->rx_n -= 1;
+    NVIC_EnableIRQ(ptr->irq);
+    return c;
+}
+
+static void usart_tx(USART_t *ptr, uint8_t c) {
+    // wait for space
+    while (ptr->tx_n == (USART_TX_BUFFER_SIZE - 1));
+    NVIC_DisableIRQ(ptr->irq);
+    if(ptr->tx_n == 0) {
+    }
+    // Put the character into the Tx buffer.
+    ptr->txbuf[ptr->tx_wr] = c;
+    ptr->tx_wr = (ptr->tx_wr + 1) & (USART_TX_BUFFER_SIZE - 1);
+    ptr->tx_n += 1;
+    NVIC_EnableIRQ(ptr->irq);
+}
+
+static void usart_isr(USART_t *ptr) {
+}
+
+#endif
+
 //-----------------------------------------------------------------------------
-// pseudo lambdas
+// 0/USART1
 
 static uint8_t rx_0(void) {
     return usart_rx(&usarts[0]);
@@ -143,6 +176,12 @@ static void tx_0(uint8_t c) {
     return usart_tx(&usarts[0], c);
 }
 
+#ifndef USART_POLLED
+void USART1_IRQHandler(void) {
+    usart_isr(&usarts[0]);
+}
+#endif
+
 //-----------------------------------------------------------------------------
 
 USART_t *usart_init(unsigned int idx) {
@@ -153,15 +192,18 @@ USART_t *usart_init(unsigned int idx) {
 
     USART_t *ptr = &usarts[idx];
     memset(ptr, 0, sizeof(USART_t));
-    ptr->usart = idx2usart[idx];
-    usart_hw_init(ptr->usart);
 
     if (idx == 0) {
+        ptr->usart = USART1;
+        ptr->irq = USART1_IRQn;
         ptr->rx = rx_0;
         ptr->test_rx = test_rx_0;
         ptr->tx = tx_0;
-    } // else ..
+    } else {
+        return 0;
+    }
 
+    usart_hw_init(ptr);
     return ptr;
 }
 
