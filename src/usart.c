@@ -92,8 +92,7 @@ static void usart_hw_init(USART_t *ptr)
 
     // clear the status register
     val = usart->SR;
-    val &= ~(USART_SR_PE | USART_SR_FE | USART_SR_NE | USART_SR_ORE | USART_SR_IDLE |\
-        USART_SR_RXNE | USART_SR_TC | USART_SR_TXE | USART_SR_LBD | USART_SR_CTS);
+    val &= ~(USART_SR_RXNE | USART_SR_TC | USART_SR_LBD | USART_SR_CTS);
     usart->SR= val;
 
     set_baud_rate(usart, 115200);
@@ -102,14 +101,18 @@ static void usart_hw_init(USART_t *ptr)
     val = usart->GTPR;
     usart->GTPR = val;
 
+#ifndef USART_POLLED
+    // turn on interrupts
+    usart->CR1 |= USART_CR1_RXNEIE;
+    NVIC_EnableIRQ(ptr->irq);
+#endif
+
     // enable the uart
     usart->CR1 |= USART_CR1_UE;
 }
 
 //-----------------------------------------------------------------------------
-
 #ifdef USART_POLLED
-
 // Polled driver
 
 static int usart_test_rx(USART_t *ptr) {
@@ -126,8 +129,8 @@ static void usart_tx(USART_t *ptr, uint8_t c) {
     usart->DR = c;
 }
 
+//-----------------------------------------------------------------------------
 #else
-
 // ISR based driver with circular tx/rx FIFOs
 
 static int usart_test_rx(USART_t *ptr) {
@@ -148,6 +151,8 @@ static void usart_tx(USART_t *ptr, uint8_t c) {
     while (ptr->tx_n == (USART_TX_BUFFER_SIZE - 1));
     NVIC_DisableIRQ(ptr->irq);
     if(ptr->tx_n == 0) {
+        // turn on the Tx empty interrupt
+        ptr->usart->CR1 |= USART_CR1_TXEIE;
     }
     // Put the character into the Tx buffer.
     ptr->txbuf[ptr->tx_wr] = c;
@@ -157,6 +162,17 @@ static void usart_tx(USART_t *ptr, uint8_t c) {
 }
 
 static void usart_isr(USART_t *ptr) {
+
+    USART_TypeDef* usart = ptr->usart;
+    uint32_t status = usart->SR;
+
+    //if (status & )
+
+
+
+
+
+
 }
 
 #endif
