@@ -120,7 +120,7 @@ static int usart_test_rx(USART_t *ptr) {
 }
 
 static uint8_t usart_rx(USART_t *ptr) {
-    return ptr->usart->DR & 0xff;
+    return ptr->usart->DR;
 }
 
 static void usart_tx(USART_t *ptr, uint8_t c) {
@@ -133,6 +133,10 @@ static void usart_tx(USART_t *ptr, uint8_t c) {
 #else
 // ISR based driver with circular tx/rx FIFOs
 
+#define inc_mod(x, size) (x) = ((x) + 1) & ((size) - 1)
+
+#define UNUSED __attribute__((unused))
+
 static int usart_test_rx(USART_t *ptr) {
     return ptr->rx_n != 0;
 }
@@ -140,7 +144,7 @@ static int usart_test_rx(USART_t *ptr) {
 static uint8_t usart_rx(USART_t *ptr) {
     NVIC_DisableIRQ(ptr->irq);
     uint8_t c = ptr->rxbuf[ptr->rx_rd];
-    ptr->rx_rd = (ptr->rx_rd + 1) & (USART_RX_BUFFER_SIZE - 1);
+    inc_mod(ptr->rx_rd, USART_RX_BUFFER_SIZE);
     ptr->rx_n -= 1;
     NVIC_EnableIRQ(ptr->irq);
     return c;
@@ -156,7 +160,7 @@ static void usart_tx(USART_t *ptr, uint8_t c) {
     }
     // Put the character into the Tx buffer.
     ptr->txbuf[ptr->tx_wr] = c;
-    ptr->tx_wr = (ptr->tx_wr + 1) & (USART_TX_BUFFER_SIZE - 1);
+    inc_mod(ptr->tx_wr, USART_TX_BUFFER_SIZE);
     ptr->tx_n += 1;
     NVIC_EnableIRQ(ptr->irq);
 }
@@ -165,14 +169,47 @@ static void usart_isr(USART_t *ptr) {
 
     USART_TypeDef* usart = ptr->usart;
     uint32_t status = usart->SR;
+    uint32_t clr UNUSED;
 
-    //if (status & )
+    // receive
+    if (status & USART_SR_RXNE) {
+        ptr->rxbuf[ptr->rx_wr] = usart->DR;
+        inc_mod(ptr->rx_wr, USART_RX_BUFFER_SIZE);
+        ptr->rx_n += 1;
+    }
 
+    // transmit
+    if (status & USART_SR_TXE) {
+        usart->DR = ptr->txbuf[ptr->tx_rd];
+        inc_mod(ptr->tx_rd, USART_TX_BUFFER_SIZE);
+        ptr->tx_n -= 1;
+        if(ptr->tx_n == 0) {
+            // turn off the Tx empty interrupt
+           usart->CR1 &= ~USART_CR1_TXEIE;
+        }
+    }
 
+    // parity errors
+    if (status & USART_SR_PE) {
+        // wait for RXNE = 1
+        while ((usart->SR & USART_SR_RXNE) == 0);
+        clr = usart->DR;
+    }
 
+    // other errors - clear by reading DR
+    if (status & (USART_SR_FE | USART_SR_NE | USART_SR_ORE | USART_SR_IDLE)) {
+        clr = usart->DR;
+    }
 
+    // LIN Break Detection Flag
+    if (status & USART_SR_LBD) {
+        usart->SR &= ~USART_SR_LBD;
+    }
 
-
+    // CTS Flag
+    if (status & USART_SR_CTS) {
+        usart->SR &= ~USART_SR_CTS;
+    }
 }
 
 #endif
