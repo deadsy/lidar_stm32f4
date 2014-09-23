@@ -59,6 +59,7 @@ SRC += $(SRC_DIR)/main.c \
        $(SRC_DIR)/stm32f4_regs.c \
        $(SRC_DIR)/lidar.c \
        $(SRC_DIR)/pid.c \
+       $(SRC_DIR)/pwm.c \
 
 OBJ = $(patsubst %.c, %.o, $(SRC))
 OBJ += $(SRC_DIR)/start.o

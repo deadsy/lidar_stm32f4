@@ -13,37 +13,20 @@ This file has the board specific routines to allow this.
 #define TIMERS_H
 
 //-----------------------------------------------------------------------------
-// step timing control
 
-// The highest timer rate is (168/2) = 84MHz
-// We divide it by 4 to give a counter rate of 21 MHz.
-// ie 1 us == 21
-#define TICKS_PER_MICROSECOND 21
-
-void step_isr_enable(void);
-void step_isr_disable(void);
-
-void set_step_period(uint32_t ticks);
-void set_step_pulse_delay(uint32_t ticks);
-void set_step_pulse_time(uint32_t ticks);
-
-// interrupt context callbacks to generate step/direction pulses
-void step_pulse_isr(void);
-void step_delay_isr(void);
-void step_period_isr(void);
+#include "stm32f4xx_hal.h"
 
 //-----------------------------------------------------------------------------
 
-// g540 charge pump
-void g540_timer_start(void);
-void g540_timer_start(void);
+// utility functions
+void tim_enable_clock(TIM_TypeDef *tim);
+void tim_enable_interrupt(TIM_TypeDef *tim, uint32_t pre, uint32_t sub);
 
 // cdc interface
 void cdc_timer_start(void);
 void cdc_timer_isr(void);
 
-//-----------------------------------------------------------------------------
-
+// general
 void timers_init(void);
 
 //-----------------------------------------------------------------------------

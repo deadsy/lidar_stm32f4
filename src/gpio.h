@@ -167,9 +167,12 @@ PH1 = ph1_osc_out
 #define LED_RED         GPIO_NUM(PORTG, 14)
 #define PUSH_BUTTON     GPIO_NUM(PORTA, 0) // 0 = open, 1 = pressed
 
-// serial port
+// lidar serial port
 #define UART_TX         GPIO_NUM(PORTA, 9)
 #define UART_RX         GPIO_NUM(PORTA, 10)
+
+// lidar motor control
+#define LIDAR_PWM       GPIO_NUM(PORTA, 5)
 
 //-----------------------------------------------------------------------------
 // generic api functions

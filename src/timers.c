@@ -5,21 +5,17 @@ Timer Functions
 
 Setup the hardware timers for:
 
-* The generation of stepper motor pulses
 * The generation of periodic callbacks to the cdc interface
-* The generation of the G540 charge pump signal
 
 */
 //-----------------------------------------------------------------------------
 
-#include "stm32f4xx_hal.h"
 #include "timers.h"
-#include "gpio.h"
 
 //-----------------------------------------------------------------------------
 
 // enable the peripheral clock for the timers
-static void enable_tim_clock(TIM_TypeDef *tim)
+void tim_enable_clock(TIM_TypeDef *tim)
 {
     if (tim == TIM2) {
         RCC->APB1ENR |= RCC_APB1ENR_TIM2EN;
@@ -32,7 +28,7 @@ static void enable_tim_clock(TIM_TypeDef *tim)
 
 // enable timer interrupts
 // set the preempt and sub priority
-static void enable_tim_interrupt(TIM_TypeDef *tim, uint32_t pre, uint32_t sub)
+void tim_enable_interrupt(TIM_TypeDef *tim, uint32_t pre, uint32_t sub)
 {
     uint32_t irq;
 
@@ -62,7 +58,7 @@ static void cdc_timer_init(void)
     TIM_TypeDef* const TIMx = CDC_TIMER;
 
     // enable the peripheral clock
-    enable_tim_clock(TIMx);
+    tim_enable_clock(TIMx);
 
     // up counter, edge aligned mode, arr is buffered
     TIMx->CR1 = TIM_CR1_ARPE;
@@ -93,7 +89,7 @@ static void cdc_timer_init(void)
     TIMx->EGR = TIM_EGR_UG;
 
     // enable the interrupt - run this at low priority.
-    enable_tim_interrupt(TIMx, 15, 0);
+    tim_enable_interrupt(TIMx, 15, 0);
 }
 
 void cdc_timer_start(void)

@@ -14,8 +14,9 @@
 #include "gpio.h"
 #include "debounce.h"
 #include "timers.h"
-#include "usart.h"
 #include "stm32f4_regs.h"
+
+#include "lidar.h"
 
 USBD_HandleTypeDef hUSBDDevice;
 
@@ -130,6 +131,9 @@ int main(void)
     debounce_init();
 
     USART_t *sio = usart_init(0);
+    PWM_t *pwm = pwm_init(0, 10000);
+    LIDAR_t *lidar = lidar_init(0, sio, pwm);
+
 
     BSP_LCD_DisplayStringAtLine(0, (uint8_t *)"Hello LIDAR");
 
@@ -144,12 +148,16 @@ int main(void)
     printf("\r\n");
     display_exceptions();
 
+
     while (1) {
+
+        lidar_run(lidar);
+
         uint8_t x = serial_read();
         if (x != 0xff) {
-             sio->tx(x);
-             while(sio->test_rx() == 0);
-             serial_write(sio->rx());
+             usart_tx(sio, x);
+             while(usart_test_rx(sio) == 0);
+             serial_write(usart_rx(sio));
         }
     }
 

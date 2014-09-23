@@ -10,6 +10,12 @@ Neato XV11 LIDAR Driver for STM32F4 platforms
 #define LIDAR_H
 
 //-----------------------------------------------------------------------------
+
+#include "pwm.h"
+#include "pid.h"
+#include "usart.h"
+
+//-----------------------------------------------------------------------------
 // target rpm for lidar motor
 
 #define LIDAR_RPM 300.0
@@ -42,23 +48,19 @@ typedef struct LIDAR_frame LIDAR_frame_t;
 
 //-----------------------------------------------------------------------------
 
-typedef struct {
+typedef struct lidar_driver {
 
     // frame data
     uint8_t frame[sizeof(LIDAR_frame_t)];
     int idx;
-
-    // serial port functions
-    int (*rx)(uint8_t *c);
-    void (*tx)(uint8_t c);
-
     // motor control
     PID_CTRL pid;
     float current_rpm;
     float desired_rpm;
-    float current_pwm;
-    void (*pwm)(float duty_cycle);
-
+    // serial control
+    USART_t *sio;
+    // pwm control
+    PWM_t *pwm;
     // range callback
     void (*range)(int angle, uint32_t data);
 
@@ -84,7 +86,7 @@ typedef struct {
 
 //-----------------------------------------------------------------------------
 
-LIDAR_t *lidar_init(void);
+LIDAR_t *lidar_init(unsigned int idx, USART_t *sio, PWM_t *pwm);
 void lidar_run(LIDAR_t *lidar);
 
 //-----------------------------------------------------------------------------

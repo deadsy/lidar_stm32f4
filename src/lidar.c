@@ -9,12 +9,12 @@ Neato XV11 LIDAR Driver for STM32F4 platforms
 #include <string.h>
 #include <stdint.h>
 
-#include "pid.h"
 #include "lidar.h"
 
 //-----------------------------------------------------------------------------
 
-static LIDAR_t lidar_info;
+#define NUM_LIDARS 1
+static LIDAR_t lidars[NUM_LIDARS];
 
 //-----------------------------------------------------------------------------
 
@@ -46,6 +46,11 @@ static void lidar_frame(LIDAR_t *lidar) {
     LIDAR_frame_t *frame = (LIDAR_frame_t *)lidar->frame;
     int i;
 
+    if (lidar->range == 0) {
+        // no callback to take the data
+        return;
+    }
+
     if (flip16(frame->checksum) != calc_checksum((uint16_t *)lidar->frame)) {
         // checksum failed
         return;
@@ -65,14 +70,12 @@ static void lidar_frame(LIDAR_t *lidar) {
 void lidar_rx(LIDAR_t *lidar) {
 
     while (1) {
-        uint8_t c;
-
-        if (lidar->rx(&c) == 0) {
+        if (usart_test_rx(lidar->sio) == 0) {
             // no more rx data
             return;
         }
 
-        lidar->frame[lidar->idx] = c;
+        lidar->frame[lidar->idx] = usart_rx(lidar->sio);
         lidar->idx ++;
 
         if (lidar->idx == 2) {
@@ -95,21 +98,17 @@ void lidar_rx(LIDAR_t *lidar) {
 void lidar_motor_on(LIDAR_t *lidar) {
     lidar->desired_rpm = LIDAR_RPM;
     lidar->current_rpm = -1.0;
-    lidar->current_pwm = LIDAR_DEFAULT_PWM;
-    lidar->pwm(lidar->current_pwm);
+    pwm_set(lidar->pwm, LIDAR_DEFAULT_PWM);
 }
 
 void lidar_motor_off(LIDAR_t *lidar) {
     lidar->desired_rpm = 0.0;
     lidar->current_rpm = -1.0;
-    lidar->current_pwm = 0.0;
-    lidar->pwm(lidar->current_pwm);
+    pwm_set(lidar->pwm, 0.0);
 }
 
 // must be called periodically at the interval used for PID constant calculations
 void lidar_motor_ctrl(LIDAR_t *lidar) {
-
-    float out;
 
     if ((lidar->desired_rpm = 0.0) || (lidar->current_rpm < 0.0)) {
         // Don't run PID control unless we have a non-zero
@@ -118,18 +117,32 @@ void lidar_motor_ctrl(LIDAR_t *lidar) {
     }
 
     // run the PID control
+    float out;
     pid(&lidar->pid, lidar->desired_rpm - lidar->current_rpm, &out, 0);
-    lidar->current_pwm += out;
-    lidar->pwm(lidar->current_pwm);
+    pwm_delta(lidar->pwm, out);
+}
+
+//-----------------------------------------------------------------------------
+
+void lidar_run(LIDAR_t *lidar) {
+    // TODO
 }
 
 //-----------------------------------------------------------------------------
 // Initialise the LIDAR driver
 
-LIDAR_t *lidar_init(void) {
+LIDAR_t *lidar_init(unsigned int idx, USART_t *sio, PWM_t *pwm) {
 
-    LIDAR_t *lidar = &lidar_info;
+    if (idx >= NUM_LIDARS) {
+        return 0;
+    }
+
+    LIDAR_t *lidar = &lidars[idx];
     memset(lidar, 0, sizeof(LIDAR_t));
+
+    lidar->sio = sio;
+    lidar->pwm = pwm;
+
     pid_init2(&lidar->pid, LIDAR_PID_KP, LIDAR_PID_TI, LIDAR_PID_TD, LIDAR_PID_DT);
     lidar_motor_off(lidar);
     return lidar;

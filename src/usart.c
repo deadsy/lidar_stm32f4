@@ -8,7 +8,6 @@ USART Driver
 
 #include <string.h>
 
-#include "stm32f4xx_hal.h"
 #include "usart.h"
 
 //-----------------------------------------------------------------------------
@@ -104,6 +103,7 @@ static void usart_hw_init(USART_t *ptr)
 #ifndef USART_POLLED
     // turn on interrupts
     usart->CR1 |= USART_CR1_RXNEIE;
+    HAL_NVIC_SetPriority(ptr->irq, 1, 0);
     NVIC_EnableIRQ(ptr->irq);
 #endif
 
@@ -115,15 +115,15 @@ static void usart_hw_init(USART_t *ptr)
 #ifdef USART_POLLED
 // Polled driver
 
-static int usart_test_rx(USART_t *ptr) {
+int usart_test_rx(USART_t *ptr) {
     return (ptr->usart->SR & USART_SR_RXNE) != 0;
 }
 
-static uint8_t usart_rx(USART_t *ptr) {
+uint8_t usart_rx(USART_t *ptr) {
     return ptr->usart->DR;
 }
 
-static void usart_tx(USART_t *ptr, uint8_t c) {
+void usart_tx(USART_t *ptr, uint8_t c) {
     USART_TypeDef* const usart = ptr->usart;
     while ((usart->SR & USART_SR_TXE) == 0);
     usart->DR = c;
@@ -137,11 +137,11 @@ static void usart_tx(USART_t *ptr, uint8_t c) {
 
 #define UNUSED __attribute__((unused))
 
-static int usart_test_rx(USART_t *ptr) {
+int usart_test_rx(USART_t *ptr) {
     return ptr->rx_n != 0;
 }
 
-static uint8_t usart_rx(USART_t *ptr) {
+uint8_t usart_rx(USART_t *ptr) {
     NVIC_DisableIRQ(ptr->irq);
     uint8_t c = ptr->rxbuf[ptr->rx_rd];
     inc_mod(ptr->rx_rd, USART_RX_BUFFER_SIZE);
@@ -150,7 +150,7 @@ static uint8_t usart_rx(USART_t *ptr) {
     return c;
 }
 
-static void usart_tx(USART_t *ptr, uint8_t c) {
+void usart_tx(USART_t *ptr, uint8_t c) {
     // wait for space
     while (ptr->tx_n == (USART_TX_BUFFER_SIZE - 1));
     NVIC_DisableIRQ(ptr->irq);
@@ -215,19 +215,7 @@ static void usart_isr(USART_t *ptr) {
 #endif
 
 //-----------------------------------------------------------------------------
-// 0/USART1
-
-static uint8_t rx_0(void) {
-    return usart_rx(&usarts[0]);
-}
-
-static int test_rx_0(void) {
-    return usart_test_rx(&usarts[0]);
-}
-
-static void tx_0(uint8_t c) {
-    return usart_tx(&usarts[0], c);
-}
+// IQR Handlers
 
 #ifndef USART_POLLED
 void USART1_IRQHandler(void) {
@@ -249,9 +237,6 @@ USART_t *usart_init(unsigned int idx) {
     if (idx == 0) {
         ptr->usart = USART1;
         ptr->irq = USART1_IRQn;
-        ptr->rx = rx_0;
-        ptr->test_rx = test_rx_0;
-        ptr->tx = tx_0;
     } else {
         return 0;
     }

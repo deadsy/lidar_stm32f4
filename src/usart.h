@@ -11,6 +11,10 @@ USART Driver
 
 //-----------------------------------------------------------------------------
 
+#include "stm32f4xx_hal.h"
+
+//-----------------------------------------------------------------------------
+
 // polled or interrupt based driver
 //#define USART_POLLED
 
@@ -35,15 +39,14 @@ typedef struct usart_driver {
     volatile int rx_n;
 #endif
 
-    uint8_t (*rx)(void);
-    int (*test_rx)(void);
-    void (*tx)(uint8_t c);
-
 } USART_t;
 
 //-----------------------------------------------------------------------------
 
 USART_t *usart_init(unsigned int idx);
+int usart_test_rx(USART_t *ptr);
+uint8_t usart_rx(USART_t *ptr);
+void usart_tx(USART_t *ptr, uint8_t c);
 
 //-----------------------------------------------------------------------------
 
