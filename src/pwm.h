@@ -26,6 +26,7 @@ typedef struct pwm_driver {
 
 PWM_t *pwm_init(unsigned int idx, uint32_t freq);
 void pwm_set(PWM_t *pwm, float x);
+uint32_t pwm_get_period(PWM_t *pwm);
 void pwm_delta(PWM_t *pwm, float x);
 
 //-----------------------------------------------------------------------------

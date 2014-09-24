@@ -13,7 +13,7 @@ PWM Driver
 
 //-----------------------------------------------------------------------------
 
-#define PWM_TIMER_PERIOD 10000
+#define PWM_TIMER_PERIOD 1000
 
 //-----------------------------------------------------------------------------
 
@@ -73,6 +73,10 @@ static float clamp_f(float x, float lo, float hi) {
 }
 
 //-----------------------------------------------------------------------------
+
+uint32_t pwm_get_period(PWM_t *pwm) {
+    return pwm->tim->CCR1;
+}
 
 void pwm_set(PWM_t *pwm, float x) {
     pwm->duty_cycle = clamp_f(x, 0.0, 1.0);

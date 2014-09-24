@@ -74,10 +74,13 @@ static void SystemClock_Config(void)
 
 //-----------------------------------------------------------------------------
 
+PWM_t *pwm;
+
 void debounce_on_handler(uint32_t bits)
 {
     if (bits & (1 << PUSH_BUTTON_BIT)) {
         gpio_set(LED_RED);
+        pwm_delta(pwm, 0.01);
     }
 }
 
@@ -101,27 +104,15 @@ int main(void)
     debounce_init();
 
     USART_t *sio = usart_init(0);
-    PWM_t *pwm = pwm_init(0, 10000);
+    pwm = pwm_init(0, 10000);
     LIDAR_t *lidar = lidar_init(0, sio, pwm);
 
     //printf("\r\n");
     //display_exceptions();
 
-    int i = 0;
-    char tmp[32];
-
     while (1) {
         lidar_run(lidar);
-
-        sprintf(tmp, "loop: %d", i);
-        i ++;
-        usart_puts(sio, tmp);
-        HAL_Delay(5);
-
-        while (usart_test_rx(sio)) {
-            lcd_putchar(usart_rx(sio));
-        }
-        printf(" %d \n", sio->rx_overflow);
+        printf("%ld\n", pwm_get_period(pwm));
     }
 
     return 0;
