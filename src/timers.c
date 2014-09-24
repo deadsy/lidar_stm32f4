@@ -89,7 +89,7 @@ static void cdc_timer_init(void)
     TIMx->EGR = TIM_EGR_UG;
 
     // enable the interrupt - run this at low priority.
-    tim_enable_interrupt(TIMx, 15, 0);
+    tim_enable_interrupt(TIMx, 5, 0);
 }
 
 void cdc_timer_start(void)
@@ -108,7 +108,7 @@ void TIM3_IRQHandler(void)
 
     if ((TIMx->SR & TIM_SR_UIF) && (TIMx->DIER & TIM_DIER_UIE)) {
         TIMx->SR &= ~TIM_SR_UIF;
-        cdc_timer_isr();
+        //cdc_timer_isr();
     }
 }
 

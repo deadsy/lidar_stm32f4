@@ -8,9 +8,6 @@ USART Driver
 
 #include <string.h>
 
-#include <stdio.h>
-#include "gpio.h"
-
 #include "usart.h"
 
 //-----------------------------------------------------------------------------
@@ -106,7 +103,7 @@ static void usart_hw_init(USART_t *ptr)
 #ifndef USART_POLLED
     // turn on interrupts
     usart->CR1 |= USART_CR1_RXNEIE;
-    HAL_NVIC_SetPriority(ptr->irq, 1, 0);
+    HAL_NVIC_SetPriority(ptr->irq, 10, 0);
     NVIC_EnableIRQ(ptr->irq);
 #endif
 
@@ -136,10 +133,8 @@ void usart_tx(USART_t *ptr, uint8_t c) {
 #else
 // ISR based driver with circular tx/rx FIFOs
 
-#define UNUSED __attribute__((unused))
-
 static inline int fifo_inc(int idx, int size) {
-    return (idx == (size - 1)) ? 0 : idx + 1;
+    return (idx + 1) & (size - 1);
 }
 
 int usart_test_rx(USART_t *ptr) {
@@ -154,16 +149,12 @@ uint8_t usart_rx(USART_t *ptr) {
     return c;
 }
 
-static uint32_t txe_count = 0;
-
 void usart_tx(USART_t *ptr, uint8_t c) {
     // wait for space
     int tx_wr_inc;
     do {
         tx_wr_inc = fifo_inc(ptr->tx_wr, USART_TX_BUFFER_SIZE);
     } while (tx_wr_inc == ptr->tx_rd);
-
-    printf("\r\n%ld\r\n", txe_count);
 
     NVIC_DisableIRQ(ptr->irq);
     if(ptr->tx_rd == ptr->tx_wr) {
@@ -180,54 +171,29 @@ static void usart_isr(USART_t *ptr) {
 
     USART_TypeDef* usart = ptr->usart;
     uint32_t status = usart->SR;
-    uint32_t clr UNUSED;
 
+    ptr->total_ints ++;
 
     // receive
-    if (status & USART_SR_RXNE) {
+    if ((status & USART_SR_RXNE) && (usart->CR1 & USART_CR1_RXNEIE)) {
         uint8_t c = usart->DR;
         int rx_wr_inc = fifo_inc(ptr->rx_wr, USART_RX_BUFFER_SIZE);
         if (rx_wr_inc != ptr->rx_rd) {
             ptr->rxbuf[ptr->rx_wr] = c;
             ptr->rx_wr = rx_wr_inc;
-        } // else overflow
+        } else {
+            ptr->rx_overflow ++;
+        }
     }
 
     // transmit
-    if (status & USART_SR_TXE) {
-
-        txe_count += 1;
-        gpio_toggle(LED_RED);
-
-
+    if ((status & USART_SR_TXE) && (usart->CR1 & USART_CR1_TXEIE)) {
         usart->DR = ptr->txbuf[ptr->tx_rd];
         ptr->tx_rd = fifo_inc(ptr->tx_rd, USART_TX_BUFFER_SIZE);
         if (ptr->tx_rd == ptr->tx_wr) {
             // turn off the Tx empty interrupt
            usart->CR1 &= ~USART_CR1_TXEIE;
         }
-    }
-
-    // parity errors
-    if (status & USART_SR_PE) {
-        // wait for RXNE = 1
-        while ((usart->SR & USART_SR_RXNE) == 0);
-        clr = usart->DR;
-    }
-
-    // other errors - clear by reading DR
-    if (status & (USART_SR_FE | USART_SR_NE | USART_SR_ORE | USART_SR_IDLE)) {
-        clr = usart->DR;
-    }
-
-    // LIN Break Detection Flag
-    if (status & USART_SR_LBD) {
-        usart->SR &= ~USART_SR_LBD;
-    }
-
-    // CTS Flag
-    if (status & USART_SR_CTS) {
-        usart->SR &= ~USART_SR_CTS;
     }
 }
 
@@ -241,6 +207,15 @@ void USART1_IRQHandler(void) {
     usart_isr(&usarts[0]);
 }
 #endif
+
+//-----------------------------------------------------------------------------
+
+void usart_puts(USART_t *ptr, const char *s) {
+    while (*s) {
+        usart_tx(ptr, *s);
+        s ++;
+    }
+}
 
 //-----------------------------------------------------------------------------
 

@@ -6,19 +6,16 @@
 */
 //-----------------------------------------------------------------------------
 
+#include <stdio.h>
+
 #include "stm32f4xx_hal.h"
-#include "stm32f429i_discovery_lcd.h"
-#include "usbd_desc.h"
-#include "usbd_cdc.h"
-#include "usbd_cdc_interface.h"
 #include "gpio.h"
 #include "debounce.h"
 #include "timers.h"
 #include "stm32f4_regs.h"
 
 #include "lidar.h"
-
-USBD_HandleTypeDef hUSBDDevice;
+#include "lcd.h"
 
 //-----------------------------------------------------------------------------
 
@@ -93,33 +90,6 @@ void debounce_off_handler(uint32_t bits)
 
 //-----------------------------------------------------------------------------
 
-static void lcd_init(void)
-{
-    BSP_LCD_Init();
-
-    BSP_LCD_LayerDefaultInit(0, (uint32_t)LCD_FRAME_BUFFER);
-    BSP_LCD_SelectLayer(0);
-    BSP_LCD_Clear(LCD_COLOR_RED);
-    BSP_LCD_SetBackColor(LCD_COLOR_RED);
-    BSP_LCD_SetTextColor(LCD_COLOR_WHITE);
-
-//     BSP_LCD_LayerDefaultInit(1, (uint32_t)LCD_FRAME_BUFFER + 76800);
-//     BSP_LCD_SelectLayer(1);
-//     BSP_LCD_Clear(LCD_COLOR_RED);
-//     BSP_LCD_SetBackColor(LCD_COLOR_RED);
-//     BSP_LCD_SetTextColor(LCD_COLOR_WHITE);
-
-    BSP_LCD_SetLayerVisible(0, ENABLE);
-//     BSP_LCD_SetLayerVisible(1, ENABLE);
-
-    BSP_LCD_DisplayOn();
-}
-
-//-----------------------------------------------------------------------------
-
-void serial_write(uint8_t data);
-uint8_t serial_read(void);
-
 int main(void)
 {
     HAL_Init();
@@ -134,31 +104,24 @@ int main(void)
     PWM_t *pwm = pwm_init(0, 10000);
     LIDAR_t *lidar = lidar_init(0, sio, pwm);
 
+    //printf("\r\n");
+    //display_exceptions();
 
-    BSP_LCD_DisplayStringAtLine(0, (uint8_t *)"Hello LIDAR");
-
-    USBD_Init(&hUSBDDevice, &VCP_Desc, 0);
-    USBD_RegisterClass(&hUSBDDevice, &USBD_CDC);
-    USBD_CDC_RegisterInterface(&hUSBDDevice, &USBD_CDC_fops);
-    USBD_Start(&hUSBDDevice);
-
-    // Delay any output to serial until the USB CDC port is working.
-    HAL_Delay(1500);
-
-    printf("\r\n");
-    display_exceptions();
-
+    int i = 0;
+    char tmp[32];
 
     while (1) {
-
         lidar_run(lidar);
 
-        uint8_t x = serial_read();
-        if (x != 0xff) {
-             usart_tx(sio, x);
-             while(usart_test_rx(sio) == 0);
-             serial_write(usart_rx(sio));
+        sprintf(tmp, "loop: %d", i);
+        i ++;
+        usart_puts(sio, tmp);
+        HAL_Delay(5);
+
+        while (usart_test_rx(sio)) {
+            lcd_putchar(usart_rx(sio));
         }
+        printf(" %d \n", sio->rx_overflow);
     }
 
     return 0;

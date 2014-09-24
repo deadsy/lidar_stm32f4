@@ -50,9 +50,6 @@ SRC += $(SRC_DIR)/main.c \
        $(SRC_DIR)/stm32f4xx_it.c \
        $(SRC_DIR)/debounce.c \
        $(SRC_DIR)/gpio.c \
-       $(SRC_DIR)/usbd_cdc_interface.c \
-       $(SRC_DIR)/usbd_conf.c \
-       $(SRC_DIR)/usbd_desc.c \
        $(SRC_DIR)/timers.c \
        $(SRC_DIR)/syscalls.c \
        $(SRC_DIR)/usart.c \
@@ -60,6 +57,11 @@ SRC += $(SRC_DIR)/main.c \
        $(SRC_DIR)/lidar.c \
        $(SRC_DIR)/pid.c \
        $(SRC_DIR)/pwm.c \
+       $(SRC_DIR)/lcd.c \
+
+#       $(SRC_DIR)/usbd_cdc_interface.c \
+#       $(SRC_DIR)/usbd_conf.c \
+#       $(SRC_DIR)/usbd_desc.c \
 
 OBJ = $(patsubst %.c, %.o, $(SRC))
 OBJ += $(SRC_DIR)/start.o
@@ -81,6 +83,7 @@ CFLAGS = -Wall
 CFLAGS += -O
 CFLAGS += -mlittle-endian -mthumb -mcpu=cortex-m4 -mthumb-interwork
 CFLAGS += -mfloat-abi=hard -mfpu=fpv4-sp-d16
+CFLAGS += -std=gnu99
 
 # linker flags
 LDSCRIPT = stm32f429zi_flash.ld

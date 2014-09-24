@@ -21,7 +21,7 @@ USART Driver
 //-----------------------------------------------------------------------------
 
 #define USART_TX_BUFFER_SIZE 4 // must be a power of 2
-#define USART_RX_BUFFER_SIZE 4 // must be a power of 2
+#define USART_RX_BUFFER_SIZE 16 // must be a power of 2
 
 typedef struct usart_driver {
 
@@ -35,6 +35,10 @@ typedef struct usart_driver {
     volatile int tx_wr;
     volatile int rx_rd;
     volatile int rx_wr;
+
+    int total_ints;
+    int rx_overflow;
+
 #endif
 
 } USART_t;
@@ -45,6 +49,7 @@ USART_t *usart_init(unsigned int idx);
 int usart_test_rx(USART_t *ptr);
 uint8_t usart_rx(USART_t *ptr);
 void usart_tx(USART_t *ptr, uint8_t c);
+void usart_puts(USART_t *ptr, const char *s);
 
 //-----------------------------------------------------------------------------
 
