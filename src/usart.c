@@ -8,6 +8,9 @@ USART Driver
 
 #include <string.h>
 
+#include <stdio.h>
+#include "gpio.h"
+
 #include "usart.h"
 
 //-----------------------------------------------------------------------------
@@ -133,35 +136,43 @@ void usart_tx(USART_t *ptr, uint8_t c) {
 #else
 // ISR based driver with circular tx/rx FIFOs
 
-#define inc_mod(x, size) (x) = ((x) + 1) & ((size) - 1)
-
 #define UNUSED __attribute__((unused))
 
+static inline int fifo_inc(int idx, int size) {
+    return (idx == (size - 1)) ? 0 : idx + 1;
+}
+
 int usart_test_rx(USART_t *ptr) {
-    return ptr->rx_n != 0;
+    return (ptr->rx_rd != ptr->rx_wr);
 }
 
 uint8_t usart_rx(USART_t *ptr) {
     NVIC_DisableIRQ(ptr->irq);
     uint8_t c = ptr->rxbuf[ptr->rx_rd];
-    inc_mod(ptr->rx_rd, USART_RX_BUFFER_SIZE);
-    ptr->rx_n -= 1;
+    ptr->rx_rd = fifo_inc(ptr->rx_rd, USART_RX_BUFFER_SIZE);
     NVIC_EnableIRQ(ptr->irq);
     return c;
 }
 
+static uint32_t txe_count = 0;
+
 void usart_tx(USART_t *ptr, uint8_t c) {
     // wait for space
-    while (ptr->tx_n == (USART_TX_BUFFER_SIZE - 1));
+    int tx_wr_inc;
+    do {
+        tx_wr_inc = fifo_inc(ptr->tx_wr, USART_TX_BUFFER_SIZE);
+    } while (tx_wr_inc == ptr->tx_rd);
+
+    printf("\r\n%ld\r\n", txe_count);
+
     NVIC_DisableIRQ(ptr->irq);
-    if(ptr->tx_n == 0) {
+    if(ptr->tx_rd == ptr->tx_wr) {
         // turn on the Tx empty interrupt
         ptr->usart->CR1 |= USART_CR1_TXEIE;
     }
     // Put the character into the Tx buffer.
     ptr->txbuf[ptr->tx_wr] = c;
-    inc_mod(ptr->tx_wr, USART_TX_BUFFER_SIZE);
-    ptr->tx_n += 1;
+    ptr->tx_wr = fifo_inc(ptr->tx_wr, USART_TX_BUFFER_SIZE);
     NVIC_EnableIRQ(ptr->irq);
 }
 
@@ -171,19 +182,27 @@ static void usart_isr(USART_t *ptr) {
     uint32_t status = usart->SR;
     uint32_t clr UNUSED;
 
+
     // receive
     if (status & USART_SR_RXNE) {
-        ptr->rxbuf[ptr->rx_wr] = usart->DR;
-        inc_mod(ptr->rx_wr, USART_RX_BUFFER_SIZE);
-        ptr->rx_n += 1;
+        uint8_t c = usart->DR;
+        int rx_wr_inc = fifo_inc(ptr->rx_wr, USART_RX_BUFFER_SIZE);
+        if (rx_wr_inc != ptr->rx_rd) {
+            ptr->rxbuf[ptr->rx_wr] = c;
+            ptr->rx_wr = rx_wr_inc;
+        } // else overflow
     }
 
     // transmit
     if (status & USART_SR_TXE) {
+
+        txe_count += 1;
+        gpio_toggle(LED_RED);
+
+
         usart->DR = ptr->txbuf[ptr->tx_rd];
-        inc_mod(ptr->tx_rd, USART_TX_BUFFER_SIZE);
-        ptr->tx_n -= 1;
-        if(ptr->tx_n == 0) {
+        ptr->tx_rd = fifo_inc(ptr->tx_rd, USART_TX_BUFFER_SIZE);
+        if (ptr->tx_rd == ptr->tx_wr) {
             // turn off the Tx empty interrupt
            usart->CR1 &= ~USART_CR1_TXEIE;
         }

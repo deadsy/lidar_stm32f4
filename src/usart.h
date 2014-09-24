@@ -20,8 +20,8 @@ USART Driver
 
 //-----------------------------------------------------------------------------
 
-#define USART_TX_BUFFER_SIZE 16 // must be a power of 2
-#define USART_RX_BUFFER_SIZE 256 // must be a power of 2
+#define USART_TX_BUFFER_SIZE 4 // must be a power of 2
+#define USART_RX_BUFFER_SIZE 4 // must be a power of 2
 
 typedef struct usart_driver {
 
@@ -31,12 +31,10 @@ typedef struct usart_driver {
 #ifndef USART_POLLED
     uint8_t txbuf[USART_TX_BUFFER_SIZE];
     uint8_t rxbuf[USART_RX_BUFFER_SIZE];
-    int tx_rd;
-    int tx_wr;
-    volatile int tx_n;
-    int rx_rd;
-    int rx_wr;
-    volatile int rx_n;
+    volatile int tx_rd;
+    volatile int tx_wr;
+    volatile int rx_rd;
+    volatile int rx_wr;
 #endif
 
 } USART_t;
