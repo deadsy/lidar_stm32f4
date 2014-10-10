@@ -112,7 +112,7 @@ int main(void)
 
     while (1) {
         lidar_run(lidar);
-        printf("%ld\n", pwm_get_period(pwm));
+        printf("%f\n", pwm_get_period(pwm));
     }
 
     return 0;

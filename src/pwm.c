@@ -74,8 +74,8 @@ static float clamp_f(float x, float lo, float hi) {
 
 //-----------------------------------------------------------------------------
 
-uint32_t pwm_get_period(PWM_t *pwm) {
-    return pwm->tim->CCR1;
+float pwm_get_period(PWM_t *pwm) {
+    return pwm->duty_cycle;
 }
 
 void pwm_set(PWM_t *pwm, float x) {
